@@ -1,71 +1,56 @@
 // =================================
-// Sound Effects System
+// Background Music System
 // =================================
 
-const sounds = {
-    transition: null,
-    reveal: null,
-    celebration: null,
-    click: null
-};
+let musicStarted = false;
+const backgroundMusic = document.getElementById('backgroundMusic');
+const musicControl = document.getElementById('musicControl');
 
-// Initialize sound effects (we'll use Web Audio API for simple tones)
-function initSounds() {
-    // Create AudioContext
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    
-    const audioContext = new AudioContext();
-    
-    // Function to create a simple pleasant tone
-    function createTone(frequency, duration, type = 'sine') {
-        return () => {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-            
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = frequency;
-            oscillator.type = type;
-            
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + duration);
-        };
-    }
-    
-    // Define pleasant sounds
-    sounds.transition = createTone(523.25, 0.2); // C note - screen transitions
-    sounds.reveal = createTone(659.25, 0.3); // E note - letter reveal
-    sounds.celebration = createTone(783.99, 0.4); // G note - celebration
-    sounds.click = createTone(440, 0.1); // A note - button clicks
+// Set volume to a comfortable level
+if (backgroundMusic) {
+    backgroundMusic.volume = 0.4; // 40% volume - adjust as needed
 }
 
-// Initialize on user interaction (browsers require user gesture)
-let soundsInitialized = false;
-function ensureSoundsInitialized() {
-    if (!soundsInitialized) {
-        initSounds();
-        soundsInitialized = true;
+// Attempt to autoplay music when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    if (backgroundMusic) {
+        backgroundMusic.play().then(() => {
+            musicStarted = true;
+            musicControl.classList.add('playing');
+            console.log('Music started automatically!');
+        }).catch(err => {
+            console.log('Autoplay blocked by browser. User can click the music button to start.');
+            // Music button is available as fallback
+        });
+    }
+});
+
+// Function to start music (called on first user interaction as backup)
+function startMusic() {
+    if (!musicStarted && backgroundMusic) {
+        backgroundMusic.play().then(() => {
+            musicStarted = true;
+            musicControl.classList.add('playing');
+        }).catch(err => {
+            console.log('Music play blocked:', err);
+        });
     }
 }
 
-// Play sound helper
-function playSound(soundName) {
-    ensureSoundsInitialized();
-    if (sounds[soundName]) {
-        try {
-            sounds[soundName]();
-        } catch (e) {
-            console.log('Sound playback failed:', e);
-        }
+// Toggle music play/pause
+function toggleMusic() {
+    if (!backgroundMusic) return;
+    
+    if (backgroundMusic.paused) {
+        backgroundMusic.play().then(() => {
+            musicControl.classList.add('playing');
+            musicStarted = true;
+        }).catch(err => {
+            console.log('Music play failed:', err);
+        });
+    } else {
+        backgroundMusic.pause();
+        musicControl.classList.remove('playing');
     }
 }
 
@@ -78,14 +63,13 @@ const totalScreens = 6;
 
 function nextScreen() {
     if (currentScreen < totalScreens - 1) {
-        playSound('transition');
+        startMusic(); // Start music on first interaction
         goToScreen(currentScreen + 1);
     }
 }
 
 function previousScreen() {
     if (currentScreen > 0) {
-        playSound('transition');
         goToScreen(currentScreen - 1);
     }
 }
@@ -93,26 +77,38 @@ function previousScreen() {
 function goToScreen(screenIndex) {
     if (screenIndex < 0 || screenIndex >= totalScreens) return;
     
-    // Play transition sound if not already played
-    if (screenIndex !== currentScreen + 1 && screenIndex !== currentScreen - 1) {
-        playSound('transition');
+    // Get all screens
+    const allScreens = document.querySelectorAll('.screen');
+    const current = document.getElementById(`screen-${currentScreen}`);
+    const next = document.getElementById(`screen-${screenIndex}`);   
+    // Hide all screens except the next one
+    allScreens.forEach((screen, index) => {
+        if (index === screenIndex) {
+            // Show and activate the next screen
+            screen.style.display = 'flex';
+            setTimeout(() => {
+                screen.classList.add('active');
+            }, 10);
+        } else {
+            // Remove active class and hide screen
+            screen.classList.remove('active', 'exiting');
+            // Delay hiding to allow transition
+            setTimeout(() => {
+                if (!screen.classList.contains('active')) {
+                    screen.style.display = 'none';
+                }
+            }, 600); // Match transition duration
+        }
+    });
+    
+    // Add exiting class to current screen
+    if (current && current !== next) {
+        current.classList.add('exiting');
     }
     
-    // Get current and next screens
-    const current = document.getElementById(`screen-${currentScreen}`);
-    const next = document.getElementById(`screen-${screenIndex}`);
-    
-    // Add exiting class to current
-    current.classList.add('exiting');
-    
-    // After transition, remove active from current and add to next
+    // Update progress indicator and current screen
     setTimeout(() => {
-        current.classList.remove('active', 'exiting');
-        next.classList.add('active');
-        
-        // Update progress indicator
         updateProgressIndicator(screenIndex);
-        
         currentScreen = screenIndex;
         
         // Reset letter if moving away from screen 2
@@ -135,7 +131,6 @@ function updateProgressIndicator(activeIndex) {
 }
 
 function restartJourney() {
-    playSound('transition');
     goToScreen(0);
 }
 
@@ -278,9 +273,6 @@ function revealLetter() {
     const letterContent = document.getElementById('letterContent');
     const revealBtn = document.getElementById('revealLetterBtn');
     
-    // Play reveal sound
-    playSound('reveal');
-    
     // Hide button
     revealBtn.style.opacity = '0';
     revealBtn.style.transform = 'scale(0.9)';
@@ -368,9 +360,6 @@ function resetLetter() {
 // =================================
 
 function triggerCelebration() {
-    // Play celebration sound
-    playSound('celebration');
-    
     const colors = ['#ff6b9d', '#c44569', '#ffd700', '#ff8fab', '#ffc9da'];
     const confettiCount = 100;
     
@@ -543,3 +532,16 @@ if (nameElement) {
         }
     });
 }
+
+// =================================
+// Initialize Screens on Page Load
+// =================================
+// Hide all screens except the first one to prevent excessive scroll
+document.addEventListener('DOMContentLoaded', () => {
+    const allScreens = document.querySelectorAll('.screen');
+    allScreens.forEach((screen, index) => {
+        if (index !== 0) {
+            screen.style.display = 'none';
+        }
+    });
+});
