@@ -912,12 +912,14 @@ section {
 
   /* Gallery Mobile */
   .gallery-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    grid-template-columns: 1fr; /* Default to single column on mobile for safety */
+    gap: 1.5rem;
   }
 
   .gallery-item {
-    height: 220px; /* Increased from 150px for better visibility */
+    height: 250px; /* Good height for single column */
+    aspect-ratio: auto; /* Remove square constraint to prevent overflow */
+    width: 100%;
   }
 
   /* Wishes Mobile */
@@ -995,27 +997,10 @@ section {
   }
 
   /* Gallery - Single column for larger pictures */
-  .gallery-grid {
-    grid-template-columns: 1fr; /* Single column for maximum picture size */
-    gap: 1.2rem;
-  }
-
+  /* Gallery - Height adjustment for very small screens */
   .gallery-item {
-    height: 280px; /* Even larger on small screens */
+    height: 280px;
   }
-
-  .countdown-label {
-    font-size: 0.75rem;
-  }
-
-  /* Screen Title Mobile */
-  .screen-content h2 {
-    font-size: 1.5rem;
-  }
-
-  /* Gallery - Single column on very small screens */
-  .gallery-grid {
-    grid-template-columns: 1fr;
     gap: 1rem;
   }
 
