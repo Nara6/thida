@@ -76,6 +76,36 @@ function previousScreen() {
 
 function goToScreen(screenIndex) {
     if (screenIndex < 0 || screenIndex >= totalScreens) return;
+
+    // Check for birthday lock when trying to leave the countdown screen (index 1)
+    if (currentScreen === 1 && screenIndex > 1) {
+        if (isBirthdayLocked()) {
+             // Shake the lock message to indicate it's locked
+             const lockMessage = document.getElementById('lockMessage');
+             if (lockMessage) {
+                 lockMessage.style.animation = 'none';
+                 lockMessage.offsetHeight; /* trigger reflow */
+                 lockMessage.style.animation = 'shake 0.5s';
+                 
+                 // Add shake keyframes if not present
+                 if (!document.getElementById('shake-style')) {
+                     const style = document.createElement('style');
+                     style.id = 'shake-style';
+                     style.textContent = `
+                        @keyframes shake {
+                            0% { transform: translateX(0); }
+                            25% { transform: translateX(-10px); }
+                            50% { transform: translateX(10px); }
+                            75% { transform: translateX(-10px); }
+                            100% { transform: translateX(0); }
+                        }
+                     `;
+                     document.head.appendChild(style);
+                 }
+             }
+             return;
+        }
+    }
     
     // Get all screens
     const allScreens = document.querySelectorAll('.screen');
@@ -197,11 +227,26 @@ document.addEventListener('DOMContentLoaded', () => {
 // Countdown Timer
 // =================================
 
-function updateCountdown() {
+function getBirthdayDistance() {
     // Birthday: February 17, 2026 at midnight
     const birthday = new Date('2026-02-17T00:00:00+07:00').getTime();
     const now = new Date().getTime();
-    const distance = birthday - now;
+    return birthday - now;
+}
+
+function isBirthdayLocked() {
+    const distance = getBirthdayDistance();
+    
+    // Check URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPreview = urlParams.get('preview') === 'true';
+    
+    // Locked if distance > 0 AND not in preview mode
+    return distance > 0 && !isPreview;
+}
+
+function updateCountdown() {
+    const distance = getBirthdayDistance();
 
     // Calculate time units
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -217,28 +262,30 @@ function updateCountdown() {
 
     // Check if birthday has arrived
     if (distance < 0) {
-        document.getElementById('countdownTimer').innerHTML = `
-            <div style="grid-column: 1/-1; font-size: 2rem; text-align: center; padding: 2rem;">
-                🎉 It's Your Birthday! 🎉
-            </div>
-        `;
+        const timerContainer = document.getElementById('countdownTimer');
+        // Only update if not already set (to prevent constantly overwriting DOM)
+        if (!timerContainer.innerHTML.includes("It's Your Birthday")) {
+             timerContainer.innerHTML = `
+                <div style="grid-column: 1/-1; font-size: 2rem; text-align: center; padding: 2rem;">
+                    🎉 It's Your Birthday! 🎉
+                </div>
+            `;
+        }
     }
 
     // Birthday Lock Logic
     // Allow access only if it's the birthday OR ?preview=true is in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const isPreview = urlParams.get('preview') === 'true';
     const continueBtn = document.getElementById('continueBtn');
     const lockMessage = document.getElementById('lockMessage');
 
     if (continueBtn && lockMessage) {
         // blocked if: not yet birthday AND not in preview mode
-        if (distance > 0 && !isPreview) {
+        if (isBirthdayLocked()) {
             continueBtn.style.display = 'none';
             lockMessage.style.display = 'block';
         } else {
             // Unlocked!
-            continueBtn.style.display = 'flex';
+            continueBtn.style.display = 'inline-flex';
             lockMessage.style.display = 'none';
         }
     }
