@@ -223,6 +223,25 @@ function updateCountdown() {
             </div>
         `;
     }
+
+    // Birthday Lock Logic
+    // Allow access only if it's the birthday OR ?preview=true is in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPreview = urlParams.get('preview') === 'true';
+    const continueBtn = document.getElementById('continueBtn');
+    const lockMessage = document.getElementById('lockMessage');
+
+    if (continueBtn && lockMessage) {
+        // blocked if: not yet birthday AND not in preview mode
+        if (distance > 0 && !isPreview) {
+            continueBtn.style.display = 'none';
+            lockMessage.style.display = 'block';
+        } else {
+            // Unlocked!
+            continueBtn.style.display = 'flex';
+            lockMessage.style.display = 'none';
+        }
+    }
 }
 
 // Update countdown every second
