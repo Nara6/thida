@@ -600,57 +600,127 @@ section {
 }
 
 /* =================================
-   Gallery Section
+   Gallery Carousel
    ================================= */
 
-.gallery-grid {
+.gallery-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 2rem auto 0;
+  max-width: 1000px;
+  width: 100%;
+}
+
+.gallery-viewport {
+  flex: 1;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.gallery-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.gallery-page {
+  min-width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-top: 3rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  padding: 0 0.25rem;
 }
 
 .gallery-item {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.4s ease;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-soft);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
 }
 
 .gallery-item:hover {
-  transform: translateY(-10px) scale(1.02);
+  border-color: var(--primary-pink);
+  box-shadow: var(--shadow-medium);
 }
 
-.photo-placeholder {
-  width: 100%;
-  height: 100%;
-  background: var(--card-bg);
+/* Gallery Navigation Arrows */
+.gallery-nav {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
-  border: 2px dashed var(--card-border);
-  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  color: var(--text-soft);
   transition: all 0.3s ease;
+  z-index: 5;
 }
 
-.gallery-item:hover .photo-placeholder {
-  background: rgba(255, 107, 157, 0.15);
+.gallery-nav:hover {
+  background: rgba(255, 107, 157, 0.25);
   border-color: var(--primary-pink);
+  transform: scale(1.1);
 }
 
-.photo-placeholder svg {
-  stroke: var(--primary-pink);
+.gallery-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+  transform: none;
 }
 
-.photo-placeholder span {
-  font-size: 1rem;
-  font-weight: 500;
+.gallery-nav:disabled:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: none;
+}
+
+/* Gallery Dots */
+.gallery-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+}
+
+.gallery-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.gallery-dot.active {
+  background: var(--primary-pink);
+  box-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
+  width: 24px;
+  border-radius: 5px;
 }
 
 /* =================================
@@ -802,6 +872,129 @@ section {
 }
 
 /* =================================
+   Lightbox / Photo Preview
+   ================================= */
+
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lightbox-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lightbox-content img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.lightbox-overlay.active .lightbox-content img {
+  animation: lightboxZoomIn 0.3s ease-out;
+}
+
+@keyframes lightboxZoomIn {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10001;
+}
+
+.lightbox-close:hover {
+  background: rgba(255, 107, 157, 0.3);
+  transform: scale(1.1);
+}
+
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10001;
+}
+
+.lightbox-nav:hover {
+  background: rgba(255, 107, 157, 0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.lightbox-prev {
+  left: 1.5rem;
+}
+
+.lightbox-next {
+  right: 1.5rem;
+}
+
+.lightbox-counter {
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 2px;
+}
+
+/* =================================
    Footer
    ================================= */
 
@@ -911,15 +1104,19 @@ section {
   }
 
   /* Gallery Mobile */
-  .gallery-grid {
-    grid-template-columns: 1fr; /* Default to single column on mobile for safety */
-    gap: 1.5rem;
+  .gallery-nav {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+  }
+
+  .gallery-page {
+    gap: 0.6rem;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .gallery-item {
-    height: 250px; /* Good height for single column */
-    aspect-ratio: auto; /* Remove square constraint to prevent overflow */
-    width: 100%;
+    aspect-ratio: 1;
   }
 
   /* Wishes Mobile */
@@ -966,6 +1163,28 @@ section {
     bottom: 1.5rem;
     right: 1.5rem;
   }
+
+  /* Lightbox Mobile */
+  .lightbox-nav {
+    width: 40px;
+    height: 40px;
+  }
+
+  .lightbox-prev {
+    left: 0.8rem;
+  }
+
+  .lightbox-next {
+    right: 0.8rem;
+  }
+
+  .lightbox-close {
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -996,16 +1215,9 @@ section {
     font-size: 2.5rem;
   }
 
-  /* Gallery - Single column for larger pictures */
   /* Gallery - Height adjustment for very small screens */
-  .gallery-item {
-    height: 280px;
-  }
-    gap: 1rem;
-  }
-
-  .gallery-item {
-    height: 200px;
+  .gallery-page {
+    gap: 0.5rem;
   }
 
   /* Letter Card */
